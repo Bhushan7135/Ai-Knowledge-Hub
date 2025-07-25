@@ -7,3 +7,11 @@ notes: [
     createdAt: "timestamp"
   }
 ]
+
+// Firestore Datastructure
+// /chats (Collection)
+//   /chatId (Document)
+//      - userId (String)
+//      - createdAt (Timestamp)
+//      - title (String) // First message or default name
+//      - messages (Array of {role, text, time})

@@ -6,6 +6,7 @@ import PrivateRoute from "./pages/PrivateRoute";
 import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
 import Notes from "./pages/Notes";
+import AIChatPage from "./pages/AIChatPage";
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route path="/ai-chat" element={<AIChatPage />} />
       </Routes>
     </Router>
   );

@@ -12,11 +12,14 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function Notes() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [notes, setNotes] = useState([]);
+  const [filteredNotes, setFilteredNotes] = useState([]); // For search
+  const [searchQuery, setSearchQuery] = useState(""); // Search query
   const [editId, setEditId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
@@ -36,10 +39,23 @@ export default function Notes() {
         ...doc.data(),
       }));
       setNotes(notesArray);
+      setFilteredNotes(notesArray); // Default
     });
 
     return () => unsubscribe();
   }, [navigate]);
+
+  // Filter notes when searchQuery changes
+  useEffect(() => {
+    const q = searchQuery.toLowerCase();
+    setFilteredNotes(
+      notes.filter(
+        (note) =>
+          note.title.toLowerCase().includes(q) ||
+          note.content.toLowerCase().includes(q)
+      )
+    );
+  }, [searchQuery, notes]);
 
   const handleAddNote = async (e) => {
     e.preventDefault();
@@ -95,15 +111,30 @@ export default function Notes() {
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6">
       {/* Navbar */}
-      <nav className="bg-white/20 backdrop-blur-md p-4 flex justify-between items-center shadow-lg rounded-xl mb-6">
-        <h1 className="text-xl font-bold">Your Notes</h1>
+      <nav className="bg-white/20 backdrop-blur-md p-4 flex items-center shadow-lg rounded-xl mb-6 relative">
         <button
           onClick={() => navigate("/dashboard")}
-          className="px-4 py-1 bg-green-500 rounded hover:bg-green-600 transition"
+          className="flex items-center space-x-2 text-yellow-300 hover:text-yellow-400 transition transform hover:scale-105 hover:shadow-lg"
         >
-          Back to Dashboard
+          <ArrowLeft className="w-5 h-5" />
+          <span>Back to Dashboard</span>
         </button>
+        <h1 className="text-xl font-bold absolute left-1/2 transform -translate-x-1/2 relative group">
+          Your Notes
+          <span className="block w-0 group-hover:w-full h-[2px] bg-yellow-300 transition-all duration-300 ease-in-out absolute bottom-0 left-0"></span>
+        </h1>
       </nav>
+
+      {/* Search Bar */}
+      <div className="max-w-xl mx-auto mb-6">
+        <input
+          type="text"
+          placeholder="Search notes..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="border-none p-3 w-full rounded bg-white/30 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        />
+      </div>
 
       {/* Add Note Form */}
       <form
@@ -133,8 +164,8 @@ export default function Notes() {
 
       {/* Notes List */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {notes.length > 0 ? (
-          notes.map((note) => (
+        {filteredNotes.length > 0 ? (
+          filteredNotes.map((note) => (
             <div
               key={note.id}
               className="bg-white/20 p-4 rounded-xl shadow hover:scale-105 transition-transform"
@@ -187,7 +218,7 @@ export default function Notes() {
           ))
         ) : (
           <p className="text-center col-span-3 opacity-80">
-            No notes yet. Start adding some!
+            No notes found. Try another search.
           </p>
         )}
       </div>

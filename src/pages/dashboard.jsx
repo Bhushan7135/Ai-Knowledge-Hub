@@ -69,12 +69,15 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-        <div className="bg-white/20 p-6 rounded-xl shadow hover:scale-105 transition-transform cursor-pointer">
-          <h3 className="text-xl font-semibold">AI Chat</h3>
-          <p className="mt-2 text-sm opacity-90">
-            Converse with your AI assistant.
-          </p>
-        </div>
+        <div
+        onClick={() => navigate("/ai-chat")}
+        className="cursor-pointer bg-white/20 backdrop-blur-md rounded-lg shadow-lg p-6 hover:bg-white/30 transition"
+      >
+        <h2 className="text-2xl font-bold">AI Chat</h2>
+        <p className="text-sm text-gray-200">
+          Converse with your AI assistant.
+        </p>
+      </div>
         <div className="bg-white/20 p-6 rounded-xl shadow hover:scale-105 transition-transform cursor-pointer">
           <h3 className="text-xl font-semibold">Recent Searches</h3>
           <p className="mt-2 text-sm opacity-90">View your latest queries.</p>
