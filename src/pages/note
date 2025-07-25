@@ -1,0 +1,9 @@
+notes: [
+  {
+    id: "noteId",
+    uid: "userId",
+    title: "Sample Note",
+    content: "This is a test note",
+    createdAt: "timestamp"
+  }
+]
