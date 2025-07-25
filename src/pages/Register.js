@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../pages/firebase"; 
+import { auth, db } from "../pages/firebase"; 
 import image1 from "../Assets/image_1.jpg"; 
+import { doc, setDoc } from "firebase/firestore";  
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -19,8 +20,15 @@ export default function Register() {
 
     try {
       setLoading(true);
+      // Step 1: Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      alert(`Registered successfully: ${userCredential.user.email}`);
+      // Step 2: Save user data to Firestore
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        name,
+        email,
+        createdAt: new Date(),
+      });
+      alert(`Welcome, ${name}! Your account has been created.`);
     } catch (err) {
       alert(err.message);
     } finally {

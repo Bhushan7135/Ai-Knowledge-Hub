@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import image1 from "../Assets/image_1.jpg";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../pages/firebase";
-
-
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate(); // <-- Add this
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,15 +20,19 @@ export default function Login() {
 
     try {
       setLoading(true);
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       alert(`Welcome ${userCredential.user.email}`);
+      navigate("/dashboard"); // <-- Redirect to dashboard
     } catch (err) {
       alert(err.message);
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div
@@ -62,9 +66,9 @@ export default function Login() {
                 <input type="checkbox" className="accent-blue-500" />
                 <span>Remember me?</span>
               </label>
-              <a href="#" className="hover:underline">
+              <Link to="/forgot-password" className="hover:underline">
                 Forgot Password?
-              </a>
+              </Link>
             </div>
             <button
               type="submit"
