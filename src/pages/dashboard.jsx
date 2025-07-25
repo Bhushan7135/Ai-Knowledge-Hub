@@ -83,7 +83,7 @@ export default function Dashboard() {
 
       {/* Footer */}
       <footer className="p-4 text-center text-sm opacity-75 mt-6">
-        © 2025 AI Knowledge Hub – Built with ❤️
+        © 2025 AI Knowledge Hub - Built with ❤️
       </footer>
     </div>
   );
