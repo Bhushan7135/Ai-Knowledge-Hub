@@ -7,12 +7,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Test route
+// Routes
+const authRoutes = require("./routes/auth");
+app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,

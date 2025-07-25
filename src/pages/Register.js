@@ -1,60 +1,90 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../pages/firebase"; 
+import image1 from "../Assets/image_1.jpg"; 
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     if (!name || !email || !password) {
       alert("All fields are required!");
       return;
     }
-    console.log("Register details:", { name, email, password });
-    alert("Registered successfully (dummy)");
+
+    try {
+      setLoading(true);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      alert(`Registered successfully: ${userCredential.user.email}`);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-6 rounded-2xl shadow-md w-80">
-        <h2 className="text-2xl font-bold mb-4">Register</h2>
-        <form onSubmit={handleRegister}>
-          <input
-            className="border p-2 w-full mb-3 rounded"
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            className="border p-2 w-full mb-3 rounded"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            className="border p-2 w-full mb-3 rounded"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button
-            type="submit"
-            className="bg-green-500 text-white w-full py-2 rounded hover:bg-green-600"
-          >
-            Register
-          </button>
-        </form>
-        <p className="text-sm text-center mt-3">
-          Already have an account?{" "}
-          <Link className="text-blue-500" to="/">
-            Login
-          </Link>
-        </p>
+    <div
+      className="h-screen w-full flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: `url(${image1})` }}
+    >
+      {/* Glassmorphism Card */}
+      <div className="flex w-3/4 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden">
+        
+        {/* Left Register Form */}
+        <div className="w-1/2 p-10">
+          <h2 className="text-2xl font-bold mb-6 text-white text-center">
+            Create Your Account
+          </h2>
+          <form onSubmit={handleRegister}>
+            <input
+              className="border-none p-3 w-full mb-4 rounded bg-white/30 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <input
+              className="border-none p-3 w-full mb-4 rounded bg-white/30 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <input
+              className="border-none p-3 w-full mb-4 rounded bg-white/30 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="submit"
+              className="bg-gradient-to-r from-green-500 to-green-600 w-full py-2 rounded text-white font-semibold hover:from-green-600 hover:to-green-700 transition"
+              disabled={loading}
+            >
+              {loading ? "Registering..." : "Register"}
+            </button>
+          </form>
+          <p className="text-sm text-center mt-4 text-white">
+            Already have an account?{" "}
+            <Link className="text-yellow-300 hover:underline" to="/">
+              Login
+            </Link>
+          </p>
+        </div>
+
+        {/* Right Quote Section */}
+        <div className="w-1/2 flex flex-col items-center justify-center text-white p-8 text-center">
+          <h3 className="text-3xl font-bold mb-4">
+            Start Your Journey with Knowledge – Register Now and Build Your Hub!
+          </h3>
+        </div>
       </div>
     </div>
   );
