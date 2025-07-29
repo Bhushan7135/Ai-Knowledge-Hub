@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, Send, PlusCircle, Bot, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { sendToGemini  } from "../services/geminiService";
 import {
   auth,
   createChat,
@@ -11,6 +12,7 @@ import {
   db,
 } from "../pages/firebase";
 import { onSnapshot, collection, query, orderBy } from "firebase/firestore";
+
 
 export default function AIChatPage() {
   const navigate = useNavigate();
@@ -74,19 +76,18 @@ export default function AIChatPage() {
       await addMessageToChat(currentChatId, newMessage);
     }
 
-    // Mock AI response
-    setTimeout(async () => {
-      const aiMessage = {
-        role: "ai",
-        text: "AI Response: " + input,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      if (currentChatId) await addMessageToChat(currentChatId, aiMessage);
-    }, 600);
+    // Call Gemini API instead of mock response
+    const aiReply = await sendToGemini(input);
+    const aiMessage = {
+      role: "ai",
+      text: aiReply,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+    setMessages((prev) => [...prev, aiMessage]);
+    if (currentChatId) await addMessageToChat(currentChatId, aiMessage);
   };
 
   // Sort chats (pinned first)

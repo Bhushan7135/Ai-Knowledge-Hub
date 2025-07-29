@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 export default function Dashboard() {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
-
+console.log("userData",userData);
   useEffect(() => {
     const fetchUserData = async () => {
       const user = auth.currentUser;
@@ -16,6 +16,7 @@ export default function Dashboard() {
       }
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
+      console.log("docSnap",docSnap);
       if (docSnap.exists()) {
         setUserData(docSnap.data());
       }

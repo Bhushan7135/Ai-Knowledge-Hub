@@ -18,11 +18,14 @@ export default function Notes() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [notes, setNotes] = useState([]);
-  const [filteredNotes, setFilteredNotes] = useState([]); // For search
-  const [searchQuery, setSearchQuery] = useState(""); // Search query
   const [editId, setEditId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
+
+  // AI Search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResult, setSearchResult] = useState("");
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,23 +42,10 @@ export default function Notes() {
         ...doc.data(),
       }));
       setNotes(notesArray);
-      setFilteredNotes(notesArray); // Default
     });
 
     return () => unsubscribe();
   }, [navigate]);
-
-  // Filter notes when searchQuery changes
-  useEffect(() => {
-    const q = searchQuery.toLowerCase();
-    setFilteredNotes(
-      notes.filter(
-        (note) =>
-          note.title.toLowerCase().includes(q) ||
-          note.content.toLowerCase().includes(q)
-      )
-    );
-  }, [searchQuery, notes]);
 
   const handleAddNote = async (e) => {
     e.preventDefault();
@@ -108,32 +98,60 @@ export default function Notes() {
     }
   };
 
+  const handleSearch = async () => {
+    if (!searchQuery) return;
+
+    try {
+      const response = await fetch("http://localhost:5000/api/ai-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery, notes }),
+      });
+
+      const data = await response.json();
+      setSearchResult(data.response);
+    } catch (error) {
+      console.error("Search failed:", error);
+      setSearchResult("Error performing AI search.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6">
       {/* Navbar */}
-      <nav className="bg-white/20 backdrop-blur-md p-4 flex items-center shadow-lg rounded-xl mb-6 relative">
+      <nav className="bg-white/20 backdrop-blur-md p-4 flex items-center justify-between shadow-lg rounded-xl mb-6">
         <button
           onClick={() => navigate("/dashboard")}
-          className="flex items-center space-x-2 text-yellow-300 hover:text-yellow-400 transition transform hover:scale-105 hover:shadow-lg"
+          className="flex items-center text-yellow-300 hover:text-yellow-400 transition"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back to Dashboard</span>
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back to Dashboard
         </button>
-        <h1 className="text-xl font-bold absolute left-1/2 transform -translate-x-1/2 relative group">
+        <h1 className="text-xl font-bold text-center flex-grow text-white">
           Your Notes
-          <span className="block w-0 group-hover:w-full h-[2px] bg-yellow-300 transition-all duration-300 ease-in-out absolute bottom-0 left-0"></span>
         </h1>
       </nav>
 
-      {/* Search Bar */}
-      <div className="max-w-xl mx-auto mb-6">
+      {/* AI Search */}
+      <div className="bg-white/20 p-4 rounded-xl mb-6 shadow-md max-w-xl mx-auto">
         <input
+          className="border-none p-3 mb-4 w-full rounded bg-white/30 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
           type="text"
-          placeholder="Search notes..."
+          placeholder="Ask AI about your notes..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="border-none p-3 w-full rounded bg-white/30 text-white placeholder-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
         />
+        <button
+          onClick={handleSearch}
+          className="bg-yellow-500 px-6 py-2 rounded hover:bg-yellow-600 transition w-full"
+        >
+          Search with AI
+        </button>
+        {searchResult && (
+          <div className="mt-4 p-3 bg-white/20 rounded text-sm">
+            {searchResult}
+          </div>
+        )}
       </div>
 
       {/* Add Note Form */}
@@ -164,8 +182,8 @@ export default function Notes() {
 
       {/* Notes List */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {filteredNotes.length > 0 ? (
-          filteredNotes.map((note) => (
+        {notes.length > 0 ? (
+          notes.map((note) => (
             <div
               key={note.id}
               className="bg-white/20 p-4 rounded-xl shadow hover:scale-105 transition-transform"
@@ -218,7 +236,7 @@ export default function Notes() {
           ))
         ) : (
           <p className="text-center col-span-3 opacity-80">
-            No notes found. Try another search.
+            No notes yet. Start adding some!
           </p>
         )}
       </div>
