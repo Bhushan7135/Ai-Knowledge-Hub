@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 export default function Dashboard() {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
-console.log("userData",userData);
+  console.log("userData", userData);
   useEffect(() => {
     const fetchUserData = async () => {
       const user = auth.currentUser;
@@ -16,7 +16,7 @@ console.log("userData",userData);
       }
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
-      console.log("docSnap",docSnap);
+      console.log("docSnap", docSnap);
       if (docSnap.exists()) {
         setUserData(docSnap.data());
       }
@@ -71,14 +71,14 @@ console.log("userData",userData);
           </div>
         </div>
         <div
-        onClick={() => navigate("/ai-chat")}
-        className="cursor-pointer bg-white/20 backdrop-blur-md rounded-lg shadow-lg p-6 hover:bg-white/30 transition"
-      >
-        <h2 className="text-2xl font-bold">AI Chat</h2>
-        <p className="text-sm text-gray-200">
-          Converse with your AI assistant.
-        </p>
-      </div>
+          onClick={() => navigate("/ai-chat")}
+          className="cursor-pointer bg-white/20 backdrop-blur-md rounded-lg shadow-lg p-6 hover:bg-white/30 transition"
+        >
+          <h2 className="text-2xl font-bold">AI Chat</h2>
+          <p className="text-sm text-gray-200">
+            Converse with your AI assistant.
+          </p>
+        </div>
         <div className="bg-white/20 p-6 rounded-xl shadow hover:scale-105 transition-transform cursor-pointer">
           <h3 className="text-xl font-semibold">Recent Searches</h3>
           <p className="mt-2 text-sm opacity-90">View your latest queries.</p>

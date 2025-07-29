@@ -9,7 +9,7 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [userEmail, setUserEmail] = useState("");
-  const [photoURL, setPhotoURL] = useState(""); 
+  const [photoURL, setPhotoURL] = useState("");
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
 
@@ -18,7 +18,9 @@ export default function Profile() {
     if (user) {
       setName(user.displayName || "");
       setUserEmail(user.email);
-      setPhotoURL(user.photoURL || "https://via.placeholder.com/150?text=Profile"); // default image
+      setPhotoURL(
+        user.photoURL || "https://via.placeholder.com/150?text=Profile"
+      ); // default image
     } else {
       navigate("/");
     }

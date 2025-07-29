@@ -17,7 +17,6 @@ import {
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
-
 // Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyAucMpD_1fYz82A7gQHLcOKU7JbD1xQhqM",
@@ -49,32 +48,43 @@ export async function fetchChats() {
 }
 
 // Create new chat
-export async function createChat(userId) {
-  const chatRef = await addDoc(collection(db, "chats"), {
-    userId,
-    title: "New Chat",
-    messages: [],
-    pinned: false,
-    lastMessage: "",
-    lastUpdated: serverTimestamp(),
-  });
-  return chatRef.id;
-}
+export const createChat = async (userId, title = "New Chat") => {
+  try {
+    const chatDoc = await addDoc(collection(db, "chats"), {
+      userId,
+      title,
+      messages: [],
+      lastMessage: "",
+      pinned: false,
+      lastUpdated: serverTimestamp(),
+    });
+    return chatDoc.id;
+  } catch (error) {
+    console.error("Error creating chat:", error);
+    return null;
+  }
+};
 
 // Add message to chat
-export async function addMessageToChat(chatId, message) {
-  const chatRef = doc(db, "chats", chatId);
-  await updateDoc(chatRef, {
-    messages: message ? [...(await getChatMessages(chatId)), message] : [],
-    lastMessage: message.text,
-    lastUpdated: serverTimestamp(),
-  });
-}
+export const addMessageToChat = async (chatId, message) => {
+  try {
+    const chatRef = doc(db, "chats", chatId);
+    await updateDoc(chatRef, {
+      messages: arrayUnion(message),
+      lastMessage: message.text,
+      lastUpdated: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error("Error adding message to chat:", error);
+  }
+};
 
 // Get messages of a chat (helper)
 async function getChatMessages(chatId) {
   const chatDoc = doc(db, "chats", chatId);
-  const snapshot = await (await getDocs(collection(db, "chats"))).docs.find((d) => d.id === chatId);
+  const snapshot = await (
+    await getDocs(collection(db, "chats"))
+  ).docs.find((d) => d.id === chatId);
   return snapshot?.data()?.messages || [];
 }
 

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../pages/firebase"; 
-import image1 from "../Assets/image_1.jpg"; 
-import { doc, setDoc } from "firebase/firestore";  
+import { auth, db } from "../pages/firebase";
+import image1 from "../Assets/image_1.jpg";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -21,7 +21,11 @@ export default function Register() {
     try {
       setLoading(true);
       // Step 1: Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       // Step 2: Save user data to Firestore
       await setDoc(doc(db, "users", userCredential.user.uid), {
         name,
@@ -43,7 +47,6 @@ export default function Register() {
     >
       {/* Glassmorphism Card */}
       <div className="flex w-3/4 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden">
-        
         {/* Left Register Form */}
         <div className="w-1/2 p-10">
           <h2 className="text-2xl font-bold mb-6 text-white text-center">

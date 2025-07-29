@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowLeft, Send, PlusCircle, Bot, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { sendToGemini  } from "../services/geminiService";
+import { sendToGemini } from "../services/geminiService";
 import {
   auth,
   createChat,
@@ -11,8 +11,14 @@ import {
   togglePinChat,
   db,
 } from "../pages/firebase";
-import { onSnapshot, collection, query, orderBy } from "firebase/firestore";
-
+import {
+  onSnapshot,
+  collection,
+  query,
+  orderBy,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 
 export default function AIChatPage() {
   const navigate = useNavigate();
@@ -22,10 +28,18 @@ export default function AIChatPage() {
   const [currentChatId, setCurrentChatId] = useState(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
+  const messagesEndRef = useRef(null); // For auto-scroll
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
   // Real-time Fetch Recent Chats
   useEffect(() => {
     const q = query(collection(db, "chats"), orderBy("lastUpdated", "desc"));
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chats = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -33,7 +47,6 @@ export default function AIChatPage() {
       }));
       setRecentChats(chats);
     });
-
     return () => unsubscribe();
   }, []);
 
@@ -50,15 +63,28 @@ export default function AIChatPage() {
       alert("Please login to start a chat.");
       return;
     }
-    const chatId = await createChat(user.uid);
+    const chatId = await createChat(user.uid, "New Chat");
     setCurrentChatId(chatId);
     setMessages([]);
-    alert("New chat started!");
   };
 
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please login to start a chat.");
+      return;
+    }
+
+    // If no chat exists, create one with first message as title
+    let chatId = currentChatId;
+    if (!chatId) {
+      const newTitle = input.length > 30 ? input.slice(0, 30) + "..." : input;
+      chatId = await createChat(user.uid, newTitle);
+      setCurrentChatId(chatId);
+    }
 
     const newMessage = {
       role: "user",
@@ -69,14 +95,12 @@ export default function AIChatPage() {
       }),
     };
 
-    setMessages([...messages, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
     setInput("");
 
-    if (currentChatId) {
-      await addMessageToChat(currentChatId, newMessage);
-    }
+    await addMessageToChat(chatId, newMessage);
 
-    // Call Gemini API instead of mock response
+    // Call Gemini API
     const aiReply = await sendToGemini(input);
     const aiMessage = {
       role: "ai",
@@ -86,8 +110,16 @@ export default function AIChatPage() {
         minute: "2-digit",
       }),
     };
+
     setMessages((prev) => [...prev, aiMessage]);
-    if (currentChatId) await addMessageToChat(currentChatId, aiMessage);
+    await addMessageToChat(chatId, aiMessage);
+
+    // Update chat metadata
+    const chatRef = doc(db, "chats", chatId);
+    await updateDoc(chatRef, {
+      lastMessage: aiMessage.text,
+      lastUpdated: new Date(),
+    });
   };
 
   // Sort chats (pinned first)
@@ -152,66 +184,6 @@ export default function AIChatPage() {
                     : ""}
                 </p>
               </div>
-
-              {/* 3-dot Menu */}
-              <div className="absolute top-3 right-3">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpenDropdownId(
-                      openDropdownId === chat.id ? null : chat.id
-                    );
-                  }}
-                  className="chat-dropdown-btn text-white hover:text-yellow-300"
-                >
-                  ⋮
-                </button>
-
-                {/* Dropdown Menu */}
-                <div
-                  className={`chat-dropdown absolute right-0 mt-2 w-36 bg-white/90 text-black rounded-lg shadow-lg z-10 backdrop-blur-md border border-gray-200 transition transform origin-top-right duration-200 ${
-                    openDropdownId === chat.id
-                      ? "opacity-100 scale-100"
-                      : "opacity-0 scale-95 pointer-events-none"
-                  }`}
-                >
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      const newTitle = prompt(
-                        "Enter new chat title:",
-                        chat.title
-                      );
-                      if (newTitle) await renameChat(chat.id, newTitle);
-                      setOpenDropdownId(null);
-                    }}
-                    className="block px-4 py-2 text-sm w-full text-left hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition rounded-t-lg"
-                  >
-                    Rename
-                  </button>
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      await togglePinChat(chat.id, chat.pinned);
-                      setOpenDropdownId(null);
-                    }}
-                    className="block px-4 py-2 text-sm w-full text-left hover:bg-gradient-to-r hover:from-yellow-400 hover:to-yellow-600 hover:text-black transition"
-                  >
-                    {chat.pinned ? "Unpin" : "Pin"}
-                  </button>
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (window.confirm("Delete this chat?"))
-                        await deleteChat(chat.id);
-                      setOpenDropdownId(null);
-                    }}
-                    className="block px-4 py-2 text-sm w-full text-left hover:bg-gradient-to-r hover:from-red-400 hover:to-red-600 hover:text-white transition rounded-b-lg"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
             </li>
           ))}
         </ul>
@@ -254,6 +226,7 @@ export default function AIChatPage() {
               </div>
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
