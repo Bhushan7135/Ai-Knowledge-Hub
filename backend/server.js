@@ -26,3 +26,39 @@ app.post("/api/gemini-chat", async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.post("/api/ai-search", async (req, res) => {
+  try {
+    const { query, notes } = req.body;
+
+    if (!query || !notes || notes.length === 0) {
+      return res.json({ results: [] });
+    }
+
+    const lowerQuery = query.toLowerCase();
+
+    // Filter and highlight matches
+    const matchedNotes = notes
+      .filter(
+        (note) =>
+          note.title.toLowerCase().includes(lowerQuery) ||
+          note.content.toLowerCase().includes(lowerQuery)
+      )
+      .map((note) => ({
+        ...note,
+        title: highlightText(note.title, query),
+        content: highlightText(note.content, query),
+      }));
+
+    res.json({ results: matchedNotes });
+  } catch (error) {
+    console.error("AI search error:", error);
+    res.status(500).json({ error: "AI search failed." });
+  }
+});
+
+// Helper: wrap matched text with <mark>
+function highlightText(text, query) {
+  const regex = new RegExp(`(${query})`, "gi");
+  return text.replace(regex, "<mark>$1</mark>");
+}

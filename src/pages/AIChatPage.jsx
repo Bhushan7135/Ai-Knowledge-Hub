@@ -19,6 +19,7 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
+import jsPDF from "jspdf";
 
 export default function AIChatPage() {
   const navigate = useNavigate();
@@ -29,7 +30,38 @@ export default function AIChatPage() {
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
   const messagesEndRef = useRef(null); // For auto-scroll
+  const handleRename = async (e, chat) => {
+    e.stopPropagation();
+    const newTitle = prompt("Enter new chat title:", chat.title);
+    if (newTitle) await renameChat(chat.id, newTitle);
+  };
 
+  const handleDeleteChat = async (e, chatId) => {
+    e.stopPropagation();
+    if (window.confirm("Delete this chat?")) await deleteChat(chatId);
+  };
+
+  const handleSavePDF = (e, chat) => {
+    e.stopPropagation();
+
+    if (!chat.messages || chat.messages.length === 0) {
+      alert("No messages to save!");
+      return;
+    }
+
+    const doc = new jsPDF();
+    doc.setFontSize(12);
+
+    chat.messages.forEach((msg, index) => {
+      doc.text(
+        `${msg.role === "user" ? "You" : "AI"}: ${msg.text}`,
+        10,
+        10 + index * 10
+      );
+    });
+
+    doc.save(`${chat.title || "chat"}.pdf`);
+  };
   // Auto-scroll when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -155,7 +187,7 @@ export default function AIChatPage() {
           {sortedChats.map((chat) => (
             <li
               key={chat.id}
-              className="p-3 bg-white/10 rounded-lg hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20 transition shadow-md relative"
+              className="group relative p-3 bg-white/10 rounded-lg hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20 transition shadow-md"
             >
               <div
                 onClick={() => {
@@ -173,16 +205,28 @@ export default function AIChatPage() {
                 <p className="text-xs opacity-80 truncate">
                   {chat.lastMessage || "No messages yet..."}
                 </p>
-                <p className="text-xs opacity-50 text-right">
-                  {chat.lastUpdated
-                    ? new Date(
-                        chat.lastUpdated.seconds * 1000
-                      ).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : ""}
-                </p>
+              </div>
+
+              {/* Hover Action Buttons */}
+              <div className="absolute top-2 right-2 hidden group-hover:flex space-x-2">
+                <button
+                  onClick={(e) => handleRename(e, chat)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 text-xs rounded"
+                >
+                  Rename
+                </button>
+                <button
+                  onClick={(e) => handleSavePDF(e, chat)}
+                  className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 text-xs rounded"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={(e) => handleDeleteChat(e, chat.id)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 text-xs rounded"
+                >
+                  Delete
+                </button>
               </div>
             </li>
           ))}
